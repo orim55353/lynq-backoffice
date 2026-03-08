@@ -11,6 +11,7 @@ import {
   CreditCard,
   FileText,
   LayoutDashboard,
+  LogOut,
   Menu,
   Moon,
   PanelLeft,
@@ -28,6 +29,7 @@ import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/lib/auth-context";
 
 interface NavItem {
   href: string;
@@ -50,8 +52,14 @@ const navItems: NavItem[] = [
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
+  const { user, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const userInitials = user?.displayName
+    ? user.displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+    : user?.email?.slice(0, 2).toUpperCase() ?? "U";
+  const userName = user?.displayName ?? user?.email ?? "User";
 
   const desktopSidebarWidth = sidebarOpen ? "md:ml-56" : "md:ml-16";
 
@@ -150,12 +158,21 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             <div className="border-t border-frame-border px-3 py-3">
               <div className="flex items-center gap-2.5">
                 <Avatar className="h-7 w-7">
-                  <AvatarFallback className="bg-frame-active text-xs text-frame-foreground">JD</AvatarFallback>
+                  <AvatarFallback className="bg-frame-active text-xs text-frame-foreground">{userInitials}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs text-frame-foreground">Jane Doe</p>
-                  <p className="truncate text-[10px] text-frame-muted">TechCorp Inc.</p>
+                  <p className="truncate text-xs text-frame-foreground">{userName}</p>
+                  <p className="truncate text-[10px] text-frame-muted">{user?.email ?? ""}</p>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 shrink-0 text-frame-muted hover:bg-frame-hover hover:text-frame-foreground"
+                  onClick={signOut}
+                  title="Sign out"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                </Button>
               </div>
             </div>
           ) : null}

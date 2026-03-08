@@ -1,0 +1,108 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper functions ───────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function belongsToOrg(orgId) {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/organizations/$(orgId)/members/$(request.auth.uid));
+    }
+
+    function hasOrgRole(orgId, role) {
+      return belongsToOrg(orgId)
+        && get(/databases/$(database)/documents/organizations/$(orgId)/members/$(request.auth.uid)).data.role == role;
+    }
+
+    function isOrgAdmin(orgId) {
+      return hasOrgRole(orgId, 'admin') || hasOrgRole(orgId, 'owner');
+    }
+
+    // ─── Users ──────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false;
+    }
+
+    // ─── Organizations ──────────────────────────────────────────
+    match /organizations/{orgId} {
+      allow read: if belongsToOrg(orgId);
+      allow create: if isAuthenticated();
+      allow update: if isOrgAdmin(orgId);
+      allow delete: if hasOrgRole(orgId, 'owner');
+
+      // Members subcollection
+      match /members/{memberId} {
+        allow read: if belongsToOrg(orgId);
+        allow write: if isOrgAdmin(orgId);
+      }
+    }
+
+    // ─── Job Listings ───────────────────────────────────────────
+    match /jobs/{jobId} {
+      allow read: if belongsToOrg(resource.data.orgId);
+      allow create: if belongsToOrg(request.resource.data.orgId);
+      allow update: if belongsToOrg(resource.data.orgId);
+      allow delete: if isOrgAdmin(resource.data.orgId);
+    }
+
+    // ─── Candidates ─────────────────────────────────────────────
+    match /candidates/{candidateId} {
+      allow read: if belongsToOrg(resource.data.orgId);
+      allow create: if belongsToOrg(request.resource.data.orgId);
+      allow update: if belongsToOrg(resource.data.orgId);
+      allow delete: if isOrgAdmin(resource.data.orgId);
+    }
+
+    // ─── Applications ───────────────────────────────────────────
+    match /applications/{applicationId} {
+      allow read: if belongsToOrg(resource.data.orgId);
+      allow create: if belongsToOrg(request.resource.data.orgId);
+      allow update: if belongsToOrg(resource.data.orgId);
+      allow delete: if false;
+    }
+
+    // ─── Analytics Events ───────────────────────────────────────
+    match /analytics/{eventId} {
+      allow read: if belongsToOrg(resource.data.orgId);
+      allow create: if belongsToOrg(request.resource.data.orgId);
+      allow update, delete: if false;
+    }
+
+    // ─── Billing ────────────────────────────────────────────────
+    match /billing/{orgId} {
+      allow read: if isOrgAdmin(orgId);
+      allow write: if false; // Server-side only
+    }
+
+    // ─── Sponsored Campaigns ────────────────────────────────────
+    match /campaigns/{campaignId} {
+      allow read: if belongsToOrg(resource.data.orgId);
+      allow create: if belongsToOrg(request.resource.data.orgId);
+      allow update: if belongsToOrg(resource.data.orgId);
+      allow delete: if isOrgAdmin(resource.data.orgId);
+    }
+
+    // ─── Notifications ──────────────────────────────────────────
+    match /notifications/{notificationId} {
+      allow read: if isOwner(resource.data.userId);
+      allow update: if isOwner(resource.data.userId);
+      allow create, delete: if false; // Server-side only
+    }
+
+    // Deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
