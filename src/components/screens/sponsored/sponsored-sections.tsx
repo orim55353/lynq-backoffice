@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { DataTable, StatusBadge, type DataTableColumn } from "@/components/dashboard/data-table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SkeletonDataTable } from "@/components/skeletons/skeleton-data-table";
 import { SkeletonChartCard } from "@/components/skeletons/skeleton-chart-card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -109,7 +110,7 @@ export function CampaignBuilderCard({
       <div>
         <Label htmlFor="jobSelect">Select Job</Label>
         {jobsLoading ? (
-          <div className="mt-2 h-10 w-full animate-pulse rounded-lg bg-muted" />
+          <Skeleton className="mt-2 h-10 w-full rounded-lg" />
         ) : (
           <select
             id="jobSelect"

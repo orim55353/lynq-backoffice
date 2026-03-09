@@ -9,6 +9,7 @@ import { KpiCard } from "@/components/dashboard/kpi-card";
 import { useOverviewKpis } from "@/lib/hooks/use-analytics";
 import { useJobs } from "@/lib/hooks/use-jobs";
 import { jobToDisplayRow } from "@/lib/hooks/transforms";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SkeletonKpiGrid } from "@/components/skeletons/skeleton-kpi-grid";
 import { SkeletonDataTable } from "@/components/skeletons/skeleton-data-table";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -273,10 +274,7 @@ export function OverviewAlertsGrid() {
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="h-32 animate-pulse rounded-[22px] bg-muted"
-            />
+            <Skeleton key={i} className="h-32 rounded-[22px]" />
           ))}
         </div>
       </div>

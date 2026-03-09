@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Bell,
   BellOff,
@@ -116,15 +117,21 @@ export function NotificationPanel({ open, onClose }: NotificationPanelProps) {
             {isLoading ? (
               <div className="space-y-1 p-2">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="animate-pulse rounded-xl bg-muted/50 p-3">
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.2, delay: i * 0.06 }}
+                    className="rounded-xl bg-muted/50 p-3"
+                  >
                     <div className="flex gap-3">
-                      <div className="h-8 w-8 rounded-full bg-muted" />
+                      <Skeleton className="h-8 w-8 rounded-full" />
                       <div className="flex-1 space-y-2">
-                        <div className="h-3 w-3/4 rounded bg-muted" />
-                        <div className="h-2.5 w-full rounded bg-muted" />
+                        <Skeleton className="h-3 w-3/4" />
+                        <Skeleton className="h-2.5 w-full" />
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             ) : !notifications?.length ? (

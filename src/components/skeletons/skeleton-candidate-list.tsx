@@ -1,10 +1,17 @@
+import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function SkeletonCandidateList() {
   return (
     <div className="flex gap-4 overflow-x-auto pb-4">
       {Array.from({ length: 6 }).map((_, colIdx) => (
-        <div key={colIdx} className="w-80 flex-shrink-0">
+        <motion.div
+          key={colIdx}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: colIdx * 0.06 }}
+          className="w-80 flex-shrink-0"
+        >
           <div className="rounded-[28px] border border-border/80 bg-card p-4 shadow-soft">
             <div className="mb-4 flex items-center justify-between">
               <Skeleton className="h-4 w-20" />
@@ -29,7 +36,7 @@ export function SkeletonCandidateList() {
               ))}
             </div>
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );
