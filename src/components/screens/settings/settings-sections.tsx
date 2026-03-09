@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import {
   Bell,
@@ -17,15 +20,69 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useOrganization, useUpdateOrganization } from "@/lib/hooks/use-org";
+import { SkeletonForm } from "@/components/skeletons/skeleton-form";
+
+interface CompanyFormState {
+  name: string;
+  website: string;
+  email: string;
+  phone: string;
+  location: string;
+  description: string;
+}
 
 export function CompanyProfileCard() {
+  const { data: org, isLoading } = useOrganization();
+  const updateOrg = useUpdateOrganization();
+
+  const [form, setForm] = useState<CompanyFormState>({
+    name: "",
+    website: "",
+    email: "",
+    phone: "",
+    location: "",
+    description: "",
+  });
+
+  useEffect(() => {
+    if (org) {
+      setForm({
+        name: org.name ?? "",
+        website: org.website ?? "",
+        email: org.billingEmail ?? "",
+        phone: "",
+        location: "",
+        description: "",
+      });
+    }
+  }, [org]);
+
+  if (isLoading) {
+    return <SkeletonForm />;
+  }
+
+  const handleChange = (field: keyof CompanyFormState, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = () => {
+    updateOrg.mutate({
+      name: form.name,
+      website: form.website,
+      billingEmail: form.email,
+    });
+  };
+
   return (
     <MotionCard className="rounded-[22px] border-border bg-card p-5 shadow-soft">
       <h2 className="mb-6">Company Profile</h2>
       <div className="space-y-6">
         <div className="flex items-center gap-6">
           <Avatar className="h-20 w-20">
-            <AvatarFallback className="bg-info/10 text-2xl text-info">T</AvatarFallback>
+            <AvatarFallback className="bg-info/10 text-2xl text-info">
+              {org?.name?.charAt(0)?.toUpperCase() ?? "?"}
+            </AvatarFallback>
           </Avatar>
           <div>
             <Button variant="outline" size="sm">
@@ -40,32 +97,41 @@ export function CompanyProfileCard() {
             id="companyName"
             label="Company Name"
             icon={<Building2 className="h-4 w-4 text-muted-foreground" />}
-            defaultValue="TechCorp Inc."
+            value={form.name}
+            onChange={(v) => handleChange("name", v)}
           />
           <ProfileInput
             id="website"
             label="Website"
             icon={<Globe className="h-4 w-4 text-muted-foreground" />}
-            defaultValue="https://techcorp.com"
+            value={form.website}
+            onChange={(v) => handleChange("website", v)}
           />
           <ProfileInput
             id="email"
             label="Contact Email"
             icon={<Mail className="h-4 w-4 text-muted-foreground" />}
-            defaultValue="contact@techcorp.com"
+            value={form.email}
+            onChange={(v) => handleChange("email", v)}
           />
           <ProfileInput
             id="phone"
             label="Phone"
             icon={<Phone className="h-4 w-4 text-muted-foreground" />}
-            defaultValue="+1 (555) 987-6543"
+            value={form.phone}
+            onChange={(v) => handleChange("phone", v)}
           />
 
           <div className="md:col-span-2">
             <Label htmlFor="location">Location</Label>
             <div className="relative mt-2">
               <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input id="location" defaultValue="123 Tech Street, San Francisco, CA 94105" className="pl-10" />
+              <Input
+                id="location"
+                value={form.location}
+                onChange={(e) => handleChange("location", e.target.value)}
+                className="pl-10"
+              />
             </div>
           </div>
 
@@ -73,13 +139,16 @@ export function CompanyProfileCard() {
             <Label htmlFor="description">Company Description</Label>
             <Textarea
               id="description"
-              defaultValue="We're building the future of work with innovative technology solutions..."
+              value={form.description}
+              onChange={(e) => handleChange("description", e.target.value)}
               className="mt-2 min-h-[100px]"
             />
           </div>
         </div>
 
-        <Button>Save Changes</Button>
+        <Button onClick={handleSave} disabled={updateOrg.isPending}>
+          {updateOrg.isPending ? "Saving..." : "Save Changes"}
+        </Button>
       </div>
     </MotionCard>
   );
@@ -209,19 +278,21 @@ function ProfileInput({
   id,
   label,
   icon,
-  defaultValue
+  value,
+  onChange
 }: {
   id: string;
   label: string;
   icon: ReactNode;
-  defaultValue: string;
+  value: string;
+  onChange: (value: string) => void;
 }) {
   return (
     <div>
       <Label htmlFor={id}>{label}</Label>
       <div className="relative mt-2">
         <span className="absolute left-3 top-1/2 -translate-y-1/2">{icon}</span>
-        <Input id={id} defaultValue={defaultValue} className="pl-10" />
+        <Input id={id} value={value} onChange={(e) => onChange(e.target.value)} className="pl-10" />
       </div>
     </div>
   );

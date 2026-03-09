@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -30,6 +30,20 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth-context";
+import { useNotifications } from "@/lib/hooks/use-notifications";
+import { NotificationPanel } from "@/components/notifications/notification-panel";
+import { GlobalSearchPalette } from "@/components/search/global-search-palette";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface NavItem {
   href: string;
@@ -55,6 +69,10 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const { unreadCount } = useNotifications();
+  const toggleNotifications = useCallback(() => setNotificationsOpen((prev) => !prev), []);
 
   const userInitials = user?.displayName
     ? user.displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -164,15 +182,30 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                   <p className="truncate text-xs text-frame-foreground">{userName}</p>
                   <p className="truncate text-[10px] text-frame-muted">{user?.email ?? ""}</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 shrink-0 text-frame-muted hover:bg-frame-hover hover:text-frame-foreground"
-                  onClick={signOut}
-                  title="Sign out"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0 text-frame-muted hover:bg-frame-hover hover:text-frame-foreground"
+                      title="Sign out"
+                    >
+                      <LogOut className="h-3.5 w-3.5" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Sign out</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to sign out of your account?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={signOut}>Sign out</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           ) : null}
@@ -195,14 +228,22 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="relative hidden md:block">
-                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-56 rounded-md border border-border bg-card py-1.5 pl-8 pr-3 text-sm text-foreground transition-all duration-150 placeholder:text-muted-foreground focus:border-lynq-accent/40 focus:outline-none focus:ring-2 focus:ring-lynq-accent/40"
-                />
-              </div>
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="hidden items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground transition-all duration-150 hover:border-lynq-accent/40 hover:text-foreground md:flex"
+              >
+                <Search className="h-3.5 w-3.5" />
+                <span>Search...</span>
+                <kbd className="ml-4 rounded border border-border px-1.5 py-0.5 text-[10px] font-medium">⌘K</kbd>
+              </button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
+                onClick={() => setSearchOpen(true)}
+              >
+                <Search className="h-4 w-4" />
+              </Button>
 
               <Button
                 variant="ghost"
@@ -213,20 +254,30 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
 
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative h-8 w-8 text-muted-foreground hover:bg-accent hover:text-foreground"
-              >
-                <Bell className="h-4 w-4" />
-                <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-danger" />
-              </Button>
+              <div className="relative z-50">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative h-8 w-8 text-muted-foreground hover:bg-accent hover:text-foreground"
+                  onClick={toggleNotifications}
+                >
+                  <Bell className="h-4 w-4" />
+                  {unreadCount > 0 ? (
+                    <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-danger text-[9px] font-bold text-white">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  ) : null}
+                </Button>
+                <NotificationPanel open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
+              </div>
             </div>
           </div>
         </header>
 
         <main className="p-4 md:p-6">{children}</main>
       </div>
+
+      <GlobalSearchPalette open={searchOpen} onOpenChange={setSearchOpen} />
     </div>
   );
 }

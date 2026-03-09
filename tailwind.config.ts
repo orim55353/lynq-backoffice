@@ -55,6 +55,11 @@ const config: Config = {
       },
       boxShadow: {
         soft: "var(--shadow-soft)"
+      },
+      keyframes: {
+        shimmer: {
+          "100%": { transform: "translateX(100%)" }
+        }
       }
     }
   },

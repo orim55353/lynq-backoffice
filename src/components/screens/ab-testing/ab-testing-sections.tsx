@@ -1,39 +1,17 @@
 "use client";
 
-import { Trophy, TrendingUp } from "lucide-react";
+import { FlaskConical, Trophy, TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonChartCard } from "@/components/skeletons/skeleton-chart-card";
+import { SkeletonDataTable } from "@/components/skeletons/skeleton-data-table";
+import { useAbTests } from "@/lib/hooks/use-ab-tests";
+import type { AbTest } from "@/lib/hooks/use-ab-tests";
 import type { ChartTheme } from "@/lib/chart-theme";
-
-const versionData = {
-  versionA: {
-    title: "Senior Product Designer",
-    hook: "Shape the future of our product experience.",
-    impressions: 45200,
-    scrollStopRate: 32.5,
-    expandRate: 18.2,
-    applyRate: 4.1,
-    costPerApplicant: 48
-  },
-  versionB: {
-    title: "Senior Product Designer - Remote First",
-    hook: "Design products used by millions. Work from anywhere.",
-    impressions: 44800,
-    scrollStopRate: 38.7,
-    expandRate: 24.3,
-    applyRate: 5.8,
-    costPerApplicant: 38
-  }
-};
-
-const metricsComparison = [
-  { metric: "Scroll Stop Rate", versionA: 32.5, versionB: 38.7 },
-  { metric: "Expand Rate", versionA: 18.2, versionB: 24.3 },
-  { metric: "Apply Rate", versionA: 4.1, versionB: 5.8 },
-  { metric: "Cost per Applicant", versionA: 48, versionB: 38 }
-];
 
 interface AbTestingHeaderProps {
   onBack: () => void;
@@ -56,37 +34,90 @@ export function AbTestingHeader({ onBack }: AbTestingHeaderProps) {
   );
 }
 
-export function ActiveTestCard() {
+export function ActiveTestCard({ test, isLoading }: { test: AbTest | null; isLoading: boolean }) {
+  if (isLoading) {
+    return (
+      <Card className="rounded-[10px] border-border bg-card p-5 shadow-soft">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <Skeleton className="mb-2 h-5 w-64" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <Skeleton className="h-6 w-16 rounded-full" />
+        </div>
+      </Card>
+    );
+  }
+
+  if (!test) {
+    return (
+      <Card className="rounded-[10px] border-border bg-card p-5 shadow-soft">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="mb-1 text-lg font-semibold">No active test</h3>
+            <p className="text-sm text-muted-foreground">Create a new A/B test to get started</p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  const totalImpressions = test.versionA.impressions + test.versionB.impressions;
+
   return (
     <Card className="rounded-[10px] border-border bg-card p-5 shadow-soft">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="mb-1 text-lg font-semibold">Active Test: Senior Product Designer</h3>
-          <p className="text-sm text-muted-foreground">Running for 14 days - 90,000 total impressions</p>
+          <h3 className="mb-1 text-lg font-semibold">Active Test: {test.name}</h3>
+          <p className="text-sm text-muted-foreground">
+            {totalImpressions.toLocaleString()} total impressions
+          </p>
         </div>
-        <Badge className="border-0 bg-success/10 text-success">Active</Badge>
+        <Badge
+          className={`border-0 ${
+            test.status === "active"
+              ? "bg-success/10 text-success"
+              : test.status === "completed"
+                ? "bg-muted text-muted-foreground"
+                : "bg-warning/10 text-warning"
+          }`}
+        >
+          {test.status.charAt(0).toUpperCase() + test.status.slice(1)}
+        </Badge>
       </div>
     </Card>
   );
 }
 
-export function VersionComparisonGrid() {
-  const versionBImpressionDelta =
-    ((versionData.versionB.impressions - versionData.versionA.impressions) /
-      versionData.versionA.impressions) *
-    100;
-  const versionBScrollStopDelta =
-    ((versionData.versionB.scrollStopRate - versionData.versionA.scrollStopRate) /
-      versionData.versionA.scrollStopRate) *
-    100;
-  const versionBExpandDelta =
-    ((versionData.versionB.expandRate - versionData.versionA.expandRate) / versionData.versionA.expandRate) * 100;
-  const versionBApplyDelta =
-    ((versionData.versionB.applyRate - versionData.versionA.applyRate) / versionData.versionA.applyRate) * 100;
-  const versionBCpaDelta =
-    ((versionData.versionB.costPerApplicant - versionData.versionA.costPerApplicant) /
-      versionData.versionA.costPerApplicant) *
-    100;
+export function VersionComparisonGrid({ test, isLoading }: { test: AbTest | null; isLoading: boolean }) {
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <SkeletonDataTable rows={5} cols={2} />
+        <SkeletonDataTable rows={5} cols={2} />
+      </div>
+    );
+  }
+
+  if (!test) {
+    return (
+      <EmptyState
+        icon={<FlaskConical className="h-6 w-6" />}
+        title="No test data"
+        description="Create an A/B test to compare different versions of your job cards."
+      />
+    );
+  }
+
+  const { versionA, versionB } = test;
+
+  const impressionDelta = ((versionB.impressions - versionA.impressions) / versionA.impressions) * 100;
+  const scrollStopDelta = ((versionB.scrollStopRate - versionA.scrollStopRate) / versionA.scrollStopRate) * 100;
+  const expandDelta = ((versionB.expandRate - versionA.expandRate) / versionA.expandRate) * 100;
+  const applyDelta = ((versionB.applyRate - versionA.applyRate) / versionA.applyRate) * 100;
+  const cpaDelta = ((versionB.costPerApplicant - versionA.costPerApplicant) / versionA.costPerApplicant) * 100;
+
+  const bIsBetter = versionB.applyRate > versionA.applyRate;
 
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
@@ -96,60 +127,58 @@ export function VersionComparisonGrid() {
           <div className="space-y-3">
             <div>
               <p className="text-sm text-muted-foreground">Title</p>
-              <p className="font-medium">{versionData.versionA.title}</p>
+              <p className="font-medium">{versionA.title}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Hook</p>
-              <p className="font-medium">{versionData.versionA.hook}</p>
+              <p className="font-medium">{versionA.hook}</p>
             </div>
           </div>
         </div>
         <div className="space-y-4 p-6">
-          <MetricRow label="Impressions" value={versionData.versionA.impressions.toLocaleString()} />
-          <MetricRow label="Scroll Stop Rate" value={`${versionData.versionA.scrollStopRate}%`} />
-          <MetricRow label="Expand Rate" value={`${versionData.versionA.expandRate}%`} />
-          <MetricRow label="Apply Rate" value={`${versionData.versionA.applyRate}%`} />
-          <MetricRow label="Cost per Applicant" value={`$${versionData.versionA.costPerApplicant}`} />
+          <MetricRow label="Impressions" value={versionA.impressions.toLocaleString()} />
+          <MetricRow label="Scroll Stop Rate" value={`${versionA.scrollStopRate}%`} />
+          <MetricRow label="Expand Rate" value={`${versionA.expandRate}%`} />
+          <MetricRow label="Apply Rate" value={`${versionA.applyRate}%`} />
+          <MetricRow label="Cost per Applicant" value={`$${versionA.costPerApplicant}`} />
         </div>
       </Card>
 
-      <Card className="overflow-hidden rounded-[10px] border border-success/20 bg-card shadow-soft">
+      <Card
+        className={`overflow-hidden rounded-[10px] border ${
+          bIsBetter ? "border-success/20" : "border-border"
+        } bg-card shadow-soft`}
+      >
         <div className="border-b border-border p-6">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-semibold">Version B (Variant)</h3>
-            <Badge className="flex items-center gap-1 border-0 bg-success text-white">
-              <Trophy className="h-3 w-3" />
-              Winner
-            </Badge>
+            {bIsBetter ? (
+              <Badge className="flex items-center gap-1 border-0 bg-success text-white">
+                <Trophy className="h-3 w-3" />
+                Winner
+              </Badge>
+            ) : null}
           </div>
           <div className="space-y-3">
             <div>
               <p className="text-sm text-muted-foreground">Title</p>
-              <p className="font-medium">{versionData.versionB.title}</p>
+              <p className="font-medium">{versionB.title}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Hook</p>
-              <p className="font-medium">{versionData.versionB.hook}</p>
+              <p className="font-medium">{versionB.hook}</p>
             </div>
           </div>
         </div>
         <div className="space-y-4 p-6">
-          <MetricRow
-            label="Impressions"
-            value={versionData.versionB.impressions.toLocaleString()}
-            change={versionBImpressionDelta}
-          />
-          <MetricRow
-            label="Scroll Stop Rate"
-            value={`${versionData.versionB.scrollStopRate}%`}
-            change={versionBScrollStopDelta}
-          />
-          <MetricRow label="Expand Rate" value={`${versionData.versionB.expandRate}%`} change={versionBExpandDelta} />
-          <MetricRow label="Apply Rate" value={`${versionData.versionB.applyRate}%`} change={versionBApplyDelta} />
+          <MetricRow label="Impressions" value={versionB.impressions.toLocaleString()} change={impressionDelta} />
+          <MetricRow label="Scroll Stop Rate" value={`${versionB.scrollStopRate}%`} change={scrollStopDelta} />
+          <MetricRow label="Expand Rate" value={`${versionB.expandRate}%`} change={expandDelta} />
+          <MetricRow label="Apply Rate" value={`${versionB.applyRate}%`} change={applyDelta} />
           <MetricRow
             label="Cost per Applicant"
-            value={`$${versionData.versionB.costPerApplicant}`}
-            change={versionBCpaDelta}
+            value={`$${versionB.costPerApplicant}`}
+            change={cpaDelta}
             inverted
           />
         </div>
@@ -158,7 +187,34 @@ export function VersionComparisonGrid() {
   );
 }
 
-export function PerformanceComparisonChart({ chart }: { chart: ChartTheme }) {
+export function PerformanceComparisonChart({
+  test,
+  isLoading,
+  chart,
+}: {
+  test: AbTest | null;
+  isLoading: boolean;
+  chart: ChartTheme;
+}) {
+  if (isLoading) {
+    return <SkeletonChartCard />;
+  }
+
+  if (!test) {
+    return null;
+  }
+
+  const metricsComparison = [
+    { metric: "Scroll Stop Rate", versionA: test.versionA.scrollStopRate, versionB: test.versionB.scrollStopRate },
+    { metric: "Expand Rate", versionA: test.versionA.expandRate, versionB: test.versionB.expandRate },
+    { metric: "Apply Rate", versionA: test.versionA.applyRate, versionB: test.versionB.applyRate },
+    {
+      metric: "Cost per Applicant",
+      versionA: test.versionA.costPerApplicant,
+      versionB: test.versionB.costPerApplicant,
+    },
+  ];
+
   return (
     <Card className="rounded-[10px] border-border bg-card p-5 shadow-soft">
       <h3 className="mb-4 text-lg font-semibold">Performance Comparison</h3>
@@ -176,19 +232,50 @@ export function PerformanceComparisonChart({ chart }: { chart: ChartTheme }) {
   );
 }
 
-export function TestRecommendationCard() {
+export function TestRecommendationCard({ test, isLoading }: { test: AbTest | null; isLoading: boolean }) {
+  if (isLoading || !test) {
+    return null;
+  }
+
+  const bApplyRate = test.versionB.applyRate;
+  const aApplyRate = test.versionA.applyRate;
+  const bIsBetter = bApplyRate > aApplyRate;
+  const winnerLabel = bIsBetter ? "Version B" : "Version A";
+  const improvement = bIsBetter
+    ? ((bApplyRate - aApplyRate) / aApplyRate) * 100
+    : ((aApplyRate - bApplyRate) / bApplyRate) * 100;
+  const totalImpressions = test.versionA.impressions + test.versionB.impressions;
+
   return (
     <Card className="rounded-[10px] border-border bg-card p-5 shadow-soft">
       <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h3 className="mb-1 font-semibold">Version B is performing 41% better</h3>
+          <h3 className="mb-1 font-semibold">
+            {winnerLabel} is performing {Math.round(improvement)}% better
+          </h3>
           <p className="text-sm text-muted-foreground">
-            Based on 90,000 impressions, Version B shows statistically significant improvements.
+            Based on {totalImpressions.toLocaleString()} impressions, {winnerLabel} shows statistically significant
+            improvements.
           </p>
         </div>
-        <Button className="bg-success text-white hover:bg-success/90">Apply Version B to All Jobs</Button>
+        <Button className="bg-success text-white hover:bg-success/90">Apply {winnerLabel} to All Jobs</Button>
       </div>
     </Card>
+  );
+}
+
+export function AbTestingContent({ chart, onBack }: { chart: ChartTheme; onBack: () => void }) {
+  const { data: tests, isLoading } = useAbTests();
+  const activeTest = tests?.find((t) => t.status === "active") ?? tests?.[0] ?? null;
+
+  return (
+    <div className="space-y-6">
+      <AbTestingHeader onBack={onBack} />
+      <ActiveTestCard test={activeTest} isLoading={isLoading} />
+      <VersionComparisonGrid test={activeTest} isLoading={isLoading} />
+      <PerformanceComparisonChart test={activeTest} isLoading={isLoading} chart={chart} />
+      <TestRecommendationCard test={activeTest} isLoading={isLoading} />
+    </div>
   );
 }
 

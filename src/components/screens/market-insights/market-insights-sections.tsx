@@ -20,15 +20,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MotionCard } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonChartCard } from "@/components/skeletons/skeleton-chart-card";
+import { SkeletonDataTable } from "@/components/skeletons/skeleton-data-table";
+import { useMarketInsights } from "@/lib/hooks/use-market-insights";
 import type { ChartTheme } from "@/lib/chart-theme";
-
-const salaryData = [
-  { role: "Sr. Product Designer", market: 155000, yours: 150000 },
-  { role: "Frontend Engineer", market: 145000, yours: 148000 },
-  { role: "Marketing Manager", market: 125000, yours: 118000 },
-  { role: "Data Analyst", market: 98000, yours: 92000 },
-  { role: "Customer Success", market: 85000, yours: 87000 }
-];
 
 const talentSupplyIndex = [
   { category: "Design", supply: 72, demand: 88 },
@@ -57,15 +53,6 @@ const bestPostingTimes = [
   { day: "Sunday", score: 38 }
 ];
 
-const regionalDemand = [
-  { region: "San Francisco", demand: 95, avgSalary: "$165K", competition: "Very High" },
-  { region: "New York", demand: 92, avgSalary: "$158K", competition: "Very High" },
-  { region: "Austin", demand: 85, avgSalary: "$135K", competition: "High" },
-  { region: "Seattle", demand: 88, avgSalary: "$152K", competition: "High" },
-  { region: "Denver", demand: 72, avgSalary: "$125K", competition: "Medium" },
-  { region: "Remote", demand: 98, avgSalary: "$142K", competition: "Very High" }
-];
-
 export function MarketInsightsHeader() {
   return (
     <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
@@ -82,6 +69,27 @@ export function MarketInsightsHeader() {
 }
 
 export function SalaryBenchmarkCard({ chart }: { chart: ChartTheme }) {
+  const { data, isLoading } = useMarketInsights();
+
+  if (isLoading) {
+    return <SkeletonChartCard />;
+  }
+
+  if (!data || data.salaryData.length === 0) {
+    return (
+      <MotionCard className="rounded-[22px] border-border bg-card p-5 shadow-soft">
+        <h2 className="mb-4">Salary Benchmarking</h2>
+        <div className="flex h-[350px] items-center justify-center">
+          <p className="text-sm text-muted-foreground">
+            No salary data available. Add jobs with salary ranges to see benchmarks.
+          </p>
+        </div>
+      </MotionCard>
+    );
+  }
+
+  const salaryData = data.salaryData;
+
   return (
     <MotionCard className="rounded-[22px] border-border bg-card p-5 shadow-soft">
       <h2 className="mb-4">Salary Benchmarking</h2>
@@ -118,6 +126,30 @@ export function SalaryBenchmarkCard({ chart }: { chart: ChartTheme }) {
 }
 
 export function SupplyAndDifficultyGrid({ chart }: { chart: ChartTheme }) {
+  const { isLoading } = useMarketInsights();
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <SkeletonChartCard />
+        <div className="rounded-[22px] border border-border bg-card p-5 shadow-soft">
+          <Skeleton className="mb-4 h-5 w-48" />
+          <div className="space-y-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                </div>
+                <Skeleton className="h-2 w-full rounded-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
       <MotionCard className="rounded-[22px] border-border bg-card p-5 shadow-soft">
@@ -164,6 +196,12 @@ export function SupplyAndDifficultyGrid({ chart }: { chart: ChartTheme }) {
 }
 
 export function BestPostingTimeCard({ chart }: { chart: ChartTheme }) {
+  const { isLoading } = useMarketInsights();
+
+  if (isLoading) {
+    return <SkeletonChartCard />;
+  }
+
   return (
     <MotionCard className="rounded-[22px] border-border bg-card p-5 shadow-soft">
       <div className="mb-4 flex items-center gap-2">
@@ -201,6 +239,25 @@ export function BestPostingTimeCard({ chart }: { chart: ChartTheme }) {
 }
 
 export function RegionalDemandCard() {
+  const { data, isLoading } = useMarketInsights();
+
+  if (isLoading) {
+    return <SkeletonDataTable rows={6} cols={4} />;
+  }
+
+  if (!data || data.regionalDemand.length === 0) {
+    return (
+      <MotionCard className="rounded-[22px] border-border bg-card p-5 shadow-soft">
+        <h2 className="mb-4">Regional Demand Trends</h2>
+        <div className="flex h-[200px] items-center justify-center">
+          <p className="text-sm text-muted-foreground">
+            No regional demand data available. Add candidates with locations to see trends.
+          </p>
+        </div>
+      </MotionCard>
+    );
+  }
+
   return (
     <MotionCard className="rounded-[22px] border-border bg-card p-5 shadow-soft">
       <h2 className="mb-4">Regional Demand Trends</h2>
@@ -215,7 +272,7 @@ export function RegionalDemandCard() {
             </tr>
           </thead>
           <tbody>
-            {regionalDemand.map((region) => (
+            {data.regionalDemand.map((region) => (
               <tr key={region.region} className="border-b border-border/50">
                 <td className="px-4 py-3 font-medium">{region.region}</td>
                 <td className="px-4 py-3">

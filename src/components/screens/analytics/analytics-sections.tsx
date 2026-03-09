@@ -17,51 +17,18 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { MotionCard } from "@/components/ui/card";
 import type { ChartTheme } from "@/lib/chart-theme";
-
-const impressionsData = [
-  { date: "Feb 10", impressions: 52000 },
-  { date: "Feb 12", impressions: 58000 },
-  { date: "Feb 14", impressions: 64000 },
-  { date: "Feb 16", impressions: 71000 },
-  { date: "Feb 18", impressions: 78000 },
-  { date: "Feb 20", impressions: 82000 },
-  { date: "Feb 22", impressions: 89000 },
-  { date: "Feb 24", impressions: 95000 }
-];
-
-const funnelData = [
-  { stage: "Impressions", value: 847000, conversion: 100, dropoff: 0 },
-  { stage: "Expand", value: 254100, conversion: 30, dropoff: 70 },
-  { stage: "Apply", value: 27104, conversion: 3.2, dropoff: 89.3 },
-  { stage: "Interview", value: 2710, conversion: 10, dropoff: 90 },
-  { stage: "Offer", value: 542, conversion: 20, dropoff: 80 },
-  { stage: "Hire", value: 380, conversion: 70, dropoff: 30 }
-];
-
-const dwellTimeData = [
-  { job: "Marketing Manager", dwellTime: 31.2 },
-  { job: "Sr. Product Designer", dwellTime: 28.5 },
-  { job: "Customer Success", dwellTime: 26.8 },
-  { job: "Frontend Engineer", dwellTime: 22.1 },
-  { job: "DevOps Engineer", dwellTime: 19.4 },
-  { job: "Data Analyst", dwellTime: 15.3 }
-];
-
-const applyRateTrend = [
-  { week: "Week 1", rate: 2.8 },
-  { week: "Week 2", rate: 2.9 },
-  { week: "Week 3", rate: 3.1 },
-  { week: "Week 4", rate: 3.2 }
-];
-
-const sourceDistribution = [
-  { name: "Organic Feed", value: 62, count: 774, color: "var(--chart-1)" },
-  { name: "Sponsored", value: 28, count: 349, color: "var(--chart-4)" },
-  { name: "Company Profile", value: 7, count: 87, color: "var(--chart-2)" },
-  { name: "Direct Link", value: 3, count: 37, color: "var(--chart-3)" }
-];
+import { useAnalyticsSummary } from "@/lib/hooks/use-analytics";
+import { SkeletonChartCard } from "@/components/skeletons/skeleton-chart-card";
 
 export function ConversionFunnelCard() {
+  const { data, isLoading } = useAnalyticsSummary();
+
+  if (isLoading || !data) {
+    return <SkeletonChartCard />;
+  }
+
+  const { funnelData } = data;
+
   return (
     <MotionCard className="rounded-[22px] border-border bg-card p-5 shadow-soft">
       <h2 className="mb-5">Conversion Funnel</h2>
@@ -109,12 +76,23 @@ export function ConversionFunnelCard() {
 }
 
 export function TrafficAndApplyTrend({ chart }: { chart: ChartTheme }) {
+  const { data, isLoading } = useAnalyticsSummary();
+
+  if (isLoading || !data) {
+    return (
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <SkeletonChartCard />
+        <SkeletonChartCard />
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
       <MotionCard className="rounded-[22px] border-border bg-card p-5 shadow-soft">
         <h3 className="mb-4">Impressions Over Time</h3>
         <ResponsiveContainer width="100%" height={280} minWidth={0}>
-          <AreaChart data={impressionsData}>
+          <AreaChart data={data.impressionsOverTime}>
             <defs>
               <linearGradient id="colorImpressions" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.15} />
@@ -140,7 +118,7 @@ export function TrafficAndApplyTrend({ chart }: { chart: ChartTheme }) {
       <MotionCard className="rounded-[22px] border-border bg-card p-5 shadow-soft">
         <h3 className="mb-4">Apply Rate Trend</h3>
         <ResponsiveContainer width="100%" height={280} minWidth={0}>
-          <LineChart data={applyRateTrend}>
+          <LineChart data={data.applyRateTrend}>
             <CartesianGrid strokeDasharray="3 3" stroke={chart.gridStroke} />
             <XAxis dataKey="week" stroke={chart.axisStroke} tick={{ fontSize: 12 }} />
             <YAxis stroke={chart.axisStroke} tick={{ fontSize: 12 }} />
@@ -167,12 +145,23 @@ export function TrafficAndApplyTrend({ chart }: { chart: ChartTheme }) {
 }
 
 export function DwellTimeAndSourceBreakdown({ chart }: { chart: ChartTheme }) {
+  const { data, isLoading } = useAnalyticsSummary();
+
+  if (isLoading || !data) {
+    return (
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <SkeletonChartCard />
+        <SkeletonChartCard />
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
       <MotionCard className="rounded-[22px] border-border bg-card p-5 shadow-soft">
         <h3 className="mb-4">Avg Dwell Time by Job</h3>
         <ResponsiveContainer width="100%" height={280} minWidth={0}>
-          <BarChart data={dwellTimeData} layout="vertical">
+          <BarChart data={data.dwellTimeByJob} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" stroke={chart.gridStroke} />
             <XAxis type="number" stroke={chart.axisStroke} tick={{ fontSize: 12 }} />
             <YAxis dataKey="job" type="category" stroke={chart.axisStroke} width={130} tick={{ fontSize: 12 }} />
@@ -185,7 +174,7 @@ export function DwellTimeAndSourceBreakdown({ chart }: { chart: ChartTheme }) {
       <MotionCard className="rounded-[22px] border-border bg-card p-5 shadow-soft">
         <h3 className="mb-4">Application Source Distribution</h3>
         <div className="space-y-3">
-          {sourceDistribution.map((source) => (
+          {data.sourceDistribution.map((source) => (
             <div key={source.name}>
               <div className="mb-1 flex items-center justify-between text-sm">
                 <span>{source.name}</span>
@@ -204,13 +193,37 @@ export function DwellTimeAndSourceBreakdown({ chart }: { chart: ChartTheme }) {
 }
 
 export function BenchmarkSummary() {
+  const { data, isLoading } = useAnalyticsSummary();
+
+  if (isLoading || !data) {
+    return <SkeletonChartCard />;
+  }
+
+  const { benchmarks } = data;
+
   return (
     <MotionCard className="rounded-[22px] border-border bg-card p-5 shadow-soft">
       <h2 className="mb-5">Performance vs Category Benchmarks</h2>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <BenchmarkCard title="Apply Rate" yourValue={3.2} categoryAvg={2.8} format="percentage" />
-        <BenchmarkCard title="Avg Dwell Time" yourValue={24.5} categoryAvg={19.2} format="seconds" />
-        <BenchmarkCard title="Cost per Applicant" yourValue={45} categoryAvg={52} format="currency" inverted />
+        <BenchmarkCard
+          title="Apply Rate"
+          yourValue={benchmarks.applyRate}
+          categoryAvg={benchmarks.applyRateAvg}
+          format="percentage"
+        />
+        <BenchmarkCard
+          title="Avg Dwell Time"
+          yourValue={benchmarks.avgDwellTime}
+          categoryAvg={benchmarks.avgDwellTimeAvg}
+          format="seconds"
+        />
+        <BenchmarkCard
+          title="Cost per Applicant"
+          yourValue={benchmarks.costPerApplicant}
+          categoryAvg={benchmarks.costPerApplicantAvg}
+          format="currency"
+          inverted
+        />
       </div>
     </MotionCard>
   );
@@ -229,9 +242,9 @@ function BenchmarkCard({
   format: "percentage" | "seconds" | "currency";
   inverted?: boolean;
 }) {
-  const difference = ((yourValue - categoryAvg) / categoryAvg) * 100;
+  const difference = categoryAvg === 0 ? 0 : ((yourValue - categoryAvg) / categoryAvg) * 100;
   const isPositive = inverted ? difference < 0 : difference > 0;
-  const index = Math.round((yourValue / categoryAvg) * 100);
+  const index = categoryAvg === 0 ? 0 : Math.round((yourValue / categoryAvg) * 100);
 
   const formatValue = (value: number) => {
     if (format === "percentage") {
@@ -256,7 +269,7 @@ function BenchmarkCard({
           <div className="h-1.5 overflow-hidden rounded-full bg-muted">
             <div
               className={`h-full rounded-full ${isPositive ? "bg-success" : "bg-danger"}`}
-              style={{ width: `${(yourValue / Math.max(yourValue, categoryAvg)) * 100}%` }}
+              style={{ width: `${Math.max(yourValue, categoryAvg) === 0 ? 0 : (yourValue / Math.max(yourValue, categoryAvg)) * 100}%` }}
             />
           </div>
         </div>
@@ -269,7 +282,7 @@ function BenchmarkCard({
           <div className="h-1.5 overflow-hidden rounded-full bg-muted">
             <div
               className="h-full rounded-full bg-muted-foreground/30"
-              style={{ width: `${(categoryAvg / Math.max(yourValue, categoryAvg)) * 100}%` }}
+              style={{ width: `${Math.max(yourValue, categoryAvg) === 0 ? 0 : (categoryAvg / Math.max(yourValue, categoryAvg)) * 100}%` }}
             />
           </div>
         </div>

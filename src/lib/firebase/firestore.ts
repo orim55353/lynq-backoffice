@@ -79,29 +79,45 @@ export async function queryDocuments<T>(
 export function subscribeToCollection<T>(
   collectionPath: string,
   constraints: QueryConstraint[],
-  callback: (items: T[]) => void
+  callback: (items: T[]) => void,
+  onError?: (error: Error) => void
 ): Unsubscribe {
   const db = getFirebaseDb();
   const q = query(collection(db, collectionPath), ...constraints);
-  return onSnapshot(q, (snap) => {
-    const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T);
-    callback(items);
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T);
+      callback(items);
+    },
+    (error) => {
+      console.error(`Firestore subscription error [${collectionPath}]:`, error);
+      onError?.(error);
+    }
+  );
 }
 
 export function subscribeToDocument<T>(
   collectionPath: string,
   id: string,
-  callback: (item: T | null) => void
+  callback: (item: T | null) => void,
+  onError?: (error: Error) => void
 ): Unsubscribe {
   const db = getFirebaseDb();
-  return onSnapshot(doc(db, collectionPath, id), (snap) => {
-    if (!snap.exists()) {
-      callback(null);
-      return;
+  return onSnapshot(
+    doc(db, collectionPath, id),
+    (snap) => {
+      if (!snap.exists()) {
+        callback(null);
+        return;
+      }
+      callback({ id: snap.id, ...snap.data() } as T);
+    },
+    (error) => {
+      console.error(`Firestore subscription error [${collectionPath}/${id}]:`, error);
+      onError?.(error);
     }
-    callback({ id: snap.id, ...snap.data() } as T);
-  });
+  );
 }
 
 // Re-export query builders for convenience
