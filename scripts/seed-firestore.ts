@@ -589,6 +589,66 @@ async function seed() {
     updatedAt: now,
   });
 
+  // ─── Job Analytics (daily per-job metrics) ─────────────────
+  // Deterministic PRNG — same output every run
+  function seededRandom(seed: number): number {
+    const x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+  }
+
+  interface JobProfile {
+    baseImpressions: number;
+    scrollStopRate: number;
+    expandRate: number;
+    applyRate: number;
+    baseCpa: number;
+    trendDir: number; // -1 declining, 0 stable, 1 improving
+  }
+
+  const JOB_PROFILES: Record<string, JobProfile> = {
+    "job-1": { baseImpressions: 420, scrollStopRate: 0.32, expandRate: 0.18, applyRate: 0.042, baseCpa: 48, trendDir: 1 },
+    "job-2": { baseImpressions: 330, scrollStopRate: 0.28, expandRate: 0.15, applyRate: 0.032, baseCpa: 52, trendDir: 0 },
+    "job-3": { baseImpressions: 520, scrollStopRate: 0.38, expandRate: 0.22, applyRate: 0.048, baseCpa: 39, trendDir: 1 },
+    "job-4": { baseImpressions: 150, scrollStopRate: 0.18, expandRate: 0.09, applyRate: 0.018, baseCpa: 88, trendDir: -1 },
+    "job-5": { baseImpressions: 310, scrollStopRate: 0.30, expandRate: 0.16, applyRate: 0.035, baseCpa: 55, trendDir: 0 },
+    "job-6": { baseImpressions: 380, scrollStopRate: 0.33, expandRate: 0.19, applyRate: 0.041, baseCpa: 46, trendDir: 0 },
+  };
+
+  const baseDate = new Date("2026-03-09");
+  const jobAnalyticsCount = 30 * 6; // 30 days × 6 jobs = 180
+
+  for (const [jobId, profile] of Object.entries(JOB_PROFILES)) {
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(baseDate);
+      date.setDate(baseDate.getDate() - i);
+      const dateStr = date.toISOString().split("T")[0];
+      const docId = `${jobId}-${dateStr}`;
+
+      const seed = parseInt(jobId.replace("job-", ""), 10) * 1000 + i;
+      const noise = 0.85 + seededRandom(seed) * 0.3;
+      const trendEffect = i < 7 ? 1 + profile.trendDir * 0.08 : 1;
+
+      const impressions = Math.round(profile.baseImpressions * noise * trendEffect);
+      const scrollStops = Math.round(impressions * profile.scrollStopRate * (0.9 + seededRandom(seed + 1) * 0.2));
+      const expands = Math.round(impressions * profile.expandRate * (0.9 + seededRandom(seed + 2) * 0.2));
+      const applies = Math.round(impressions * profile.applyRate * trendEffect * (0.85 + seededRandom(seed + 3) * 0.3));
+      const costPerApplicant = Math.round(profile.baseCpa * (0.9 + seededRandom(seed + 4) * 0.2) * 100) / 100;
+
+      const ref = db.collection("jobAnalytics").doc(docId);
+      batch.set(ref, {
+        orgId: ORG_ID,
+        jobId,
+        date: dateStr,
+        impressions,
+        scrollStops,
+        expands,
+        applies,
+        costPerApplicant,
+        createdAt: now,
+      });
+    }
+  }
+
   // ─── Analytics Events ──────────────────────────────────────
   const eventTypes = [
     "job_view",
@@ -667,6 +727,7 @@ async function seed() {
   console.log(`  Candidates: ${candidatesData.length}`);
   console.log(`  Applications: ${applicationsData.length}`);
   console.log(`  Campaigns: ${campaignsData.length}`);
+  console.log(`  Job Analytics: ${jobAnalyticsCount}`);
   console.log(`  Analytics Events: 50`);
   console.log(`  Notifications: ${notifications.length}`);
   console.log(

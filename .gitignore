@@ -31,3 +31,15 @@ functions/lib
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# firebase
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.firebase
+
+# AI tools / local configs
+.agent/
+.agents/
+.claude/
+.kiro/

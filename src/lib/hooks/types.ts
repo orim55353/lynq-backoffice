@@ -42,6 +42,20 @@ export interface OverviewKpis {
   timeToHire: number;
 }
 
+export interface SparklineEntry {
+  readonly sparkline: readonly number[];
+  readonly change: number;
+}
+
+export interface OverviewSparklines {
+  readonly activeJobs: SparklineEntry;
+  readonly totalImpressions: SparklineEntry;
+  readonly avgDwellTime: SparklineEntry;
+  readonly applyRate: SparklineEntry;
+  readonly costPerApplicant: SparklineEntry;
+  readonly timeToHire: SparklineEntry;
+}
+
 export interface AnalyticsBenchmarks {
   applyRate: number;
   applyRateAvg: number;

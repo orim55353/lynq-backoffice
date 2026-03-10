@@ -1,11 +1,15 @@
 "use client";
 
 import { useMemo } from "react";
-import { MOCK_ANALYTICS, MOCK_JOBS } from "@/lib/data/mock-analytics";
+import { useAuth } from "@/lib/auth-context";
+import { useFirestoreCollection } from "./use-firestore-subscription";
+import { where } from "@/lib/firebase/firestore";
+import { useJob, useJobs } from "./use-jobs";
 import {
   computeJobPerformanceSummary,
   computeOrgBenchmarks,
-} from "@/lib/hooks/transforms/job-analytics-transforms";
+} from "./transforms/job-analytics-transforms";
+import type { JobAnalytics } from "@/lib/firebase/types";
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -39,72 +43,131 @@ interface PerformanceSummary {
   readonly healthScore: number;
 }
 
-interface OrgBenchmarks {
-  readonly avgScrollStopRate: number;
-  readonly avgExpandRate: number;
-  readonly avgApplyRate: number;
-  readonly avgCostPerApplicant: number;
-  readonly avgHealthScore: number;
+
+// ─── Internal helper ──────────────────────────────────────────
+
+function useJobAnalyticsCollection(jobId?: string) {
+  const { orgId } = useAuth();
+
+  const constraints = useMemo(() => {
+    if (!orgId) return [];
+    if (jobId) {
+      return [where("orgId", "==", orgId), where("jobId", "==", jobId)];
+    }
+    return [where("orgId", "==", orgId)];
+  }, [orgId, jobId]);
+
+  return useFirestoreCollection<JobAnalytics>({
+    queryKey: jobId
+      ? ["jobAnalytics", orgId, jobId]
+      : ["jobAnalytics", orgId],
+    collectionPath: "jobAnalytics",
+    constraints,
+    enabled: !!orgId,
+  });
+}
+
+function toAnalyticsDay(doc: JobAnalytics): AnalyticsDay {
+  return {
+    date: doc.date,
+    impressions: doc.impressions,
+    scrollStops: doc.scrollStops,
+    expands: doc.expands,
+    applies: doc.applies,
+    costPerApplicant: doc.costPerApplicant,
+  };
 }
 
 // ─── useJobAnalytics ──────────────────────────────────────────
 
 export function useJobAnalytics(jobId: string, dateRange?: DateRange) {
+  const { data: rawDocs, isLoading } = useJobAnalyticsCollection(jobId);
+
   const analytics = useMemo((): readonly AnalyticsDay[] => {
-    const allDays = MOCK_ANALYTICS[jobId];
-    if (!allDays) return [];
+    if (!rawDocs) return [];
 
-    if (!dateRange) return allDays;
+    const sorted = rawDocs
+      .map(toAnalyticsDay)
+      .sort((a, b) => a.date.localeCompare(b.date));
 
-    return allDays.filter(
+    if (!dateRange) return sorted;
+
+    return sorted.filter(
       (day) => day.date >= dateRange.start && day.date <= dateRange.end,
     );
-  }, [jobId, dateRange]);
+  }, [rawDocs, dateRange]);
 
-  return { analytics, isLoading: false } as const;
+  return { analytics, isLoading } as const;
 }
 
 // ─── useJobPerformanceSummary ─────────────────────────────────
 
 export function useJobPerformanceSummary(jobId: string) {
-  const { analytics } = useJobAnalytics(jobId);
+  const { analytics, isLoading: analyticsLoading } = useJobAnalytics(jobId);
+  const { data: job, isLoading: jobLoading } = useJob(jobId);
 
   const summary = useMemo((): PerformanceSummary | null => {
-    const job = MOCK_JOBS.find((j) => j.id === jobId);
     if (!job || analytics.length === 0) return null;
 
     return computeJobPerformanceSummary(
       { id: job.id, title: job.title, status: job.status },
       analytics,
     );
-  }, [jobId, analytics]);
+  }, [job, analytics]);
 
-  return { summary, isLoading: false } as const;
+  return { summary, isLoading: analyticsLoading || jobLoading } as const;
 }
 
 // ─── useJobsComparison ────────────────────────────────────────
 
 export function useJobsComparison(jobIds?: readonly string[]) {
-  const targetIds = jobIds ?? MOCK_JOBS.map((j) => j.id);
+  const { data: allDocs, isLoading: analyticsLoading } =
+    useJobAnalyticsCollection();
+  const { data: jobs, isLoading: jobsLoading } = useJobs();
 
-  const summaries = useMemo((): readonly PerformanceSummary[] => {
-    return targetIds
-      .map((id) => {
-        const job = MOCK_JOBS.find((j) => j.id === id);
-        const analytics = MOCK_ANALYTICS[id];
-        if (!job || !analytics || analytics.length === 0) return null;
+  const result = useMemo(() => {
+    if (!allDocs || !jobs) {
+      return {
+        summaries: [] as readonly PerformanceSummary[],
+        benchmarks: computeOrgBenchmarks([]),
+      };
+    }
 
-        return computeJobPerformanceSummary(
+    // Group analytics by jobId
+    const byJob = new Map<string, AnalyticsDay[]>();
+    for (const doc of allDocs) {
+      if (jobIds && !jobIds.includes(doc.jobId)) continue;
+      const existing = byJob.get(doc.jobId);
+      const day = toAnalyticsDay(doc);
+      if (existing) {
+        existing.push(day);
+      } else {
+        byJob.set(doc.jobId, [day]);
+      }
+    }
+
+    const summaries: PerformanceSummary[] = [];
+    for (const [jobId, days] of byJob.entries()) {
+      const job = jobs.find((j) => j.id === jobId);
+      if (!job || days.length === 0) continue;
+
+      summaries.push(
+        computeJobPerformanceSummary(
           { id: job.id, title: job.title, status: job.status },
-          analytics,
-        );
-      })
-      .filter((s): s is PerformanceSummary => s !== null);
-  }, [targetIds]);
+          days.sort((a, b) => a.date.localeCompare(b.date)),
+        ),
+      );
+    }
 
-  const benchmarks = useMemo((): OrgBenchmarks => {
-    return computeOrgBenchmarks(summaries);
-  }, [summaries]);
+    return {
+      summaries,
+      benchmarks: computeOrgBenchmarks(summaries),
+    };
+  }, [allDocs, jobs, jobIds]);
 
-  return { summaries, benchmarks, isLoading: false } as const;
+  return {
+    summaries: result.summaries,
+    benchmarks: result.benchmarks,
+    isLoading: analyticsLoading || jobsLoading,
+  } as const;
 }

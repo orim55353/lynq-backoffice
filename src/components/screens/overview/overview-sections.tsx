@@ -71,49 +71,48 @@ export function OverviewHeader() {
 }
 
 export function OverviewKpiGrid() {
-  const { data: kpis, isLoading } = useOverviewKpis();
+  const { data: kpis, sparklines, isLoading } = useOverviewKpis();
 
   if (isLoading) {
     return <SkeletonKpiGrid />;
   }
 
+  const toSparkline = (entry: { readonly sparkline: readonly number[]; readonly change: number }) => ({
+    sparklineData: entry.sparkline.length > 0 ? [...entry.sparkline] : undefined,
+    change: entry.change,
+  });
+
   const kpiCards = [
     {
       title: "Active Jobs",
       value: kpis?.activeJobs ?? 0,
-      change: 0,
-      sparklineData: [] as number[],
+      ...toSparkline(sparklines.activeJobs),
     },
     {
       title: "Total Impressions",
       value: kpis ? formatNumber(kpis.totalImpressions) : "0",
-      change: 0,
-      sparklineData: [] as number[],
+      ...toSparkline(sparklines.totalImpressions),
     },
     {
       title: "Avg Dwell Time",
       value: kpis ? `${kpis.avgDwellTime.toFixed(1)}s` : "0s",
-      change: 0,
-      sparklineData: [] as number[],
+      ...toSparkline(sparklines.avgDwellTime),
     },
     {
       title: "Apply Rate",
       value: kpis ? `${kpis.applyRate.toFixed(1)}%` : "0%",
-      change: 0,
-      sparklineData: [] as number[],
+      ...toSparkline(sparklines.applyRate),
     },
     {
       title: "Cost per Applicant",
       value: kpis?.costPerApplicant ?? 0,
-      change: 0,
       format: "currency" as const,
-      sparklineData: [] as number[],
+      ...toSparkline(sparklines.costPerApplicant),
     },
     {
       title: "Time to Hire",
       value: kpis ? `${kpis.timeToHire}d` : "0d",
-      change: 0,
-      sparklineData: [] as number[],
+      ...toSparkline(sparklines.timeToHire),
     },
   ];
 

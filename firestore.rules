@@ -79,6 +79,13 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // ─── Job Analytics (daily per-job metrics) ──────────────────
+    match /jobAnalytics/{docId} {
+      allow read: if belongsToOrg(resource.data.orgId);
+      allow create: if belongsToOrg(request.resource.data.orgId);
+      allow update, delete: if false;
+    }
+
     // ─── Billing ────────────────────────────────────────────────
     match /billing/{orgId} {
       allow read: if isOrgAdmin(orgId);

@@ -11,8 +11,24 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Lynq Backoffice Dashboard",
-  description: "Employer backoffice dashboard UI built with Next.js",
+  title: "Lynq — Employer Dashboard",
+  description:
+    "Manage jobs, candidates, campaigns, and analytics — all in one place.",
+  metadataBase: new URL("https://app.lynq.work"),
+  openGraph: {
+    title: "Lynq — Employer Dashboard",
+    description:
+      "Manage jobs, candidates, campaigns, and analytics — all in one place.",
+    siteName: "Lynq",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary",
+    title: "Lynq — Employer Dashboard",
+    description:
+      "Manage jobs, candidates, campaigns, and analytics — all in one place.",
+  },
 };
 
 export default function RootLayout({

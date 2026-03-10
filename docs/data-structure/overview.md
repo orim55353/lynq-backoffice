@@ -15,6 +15,7 @@ The Lynq backoffice uses Cloud Firestore as its primary database, organized arou
 | `applications`  | Job applications (join table)      | `orgId`, `jobId`, `candidateId` |
 | `campaigns`     | Sponsored ad campaigns             | `orgId`, `jobId`, `budget`  |
 | `analytics`     | Event tracking                     | `orgId`, `eventType`        |
+| `jobAnalytics`  | Daily per-job performance metrics   | `orgId`, `jobId`, `date`    |
 | `billing`       | Billing & subscription info        | `orgId`, `plan`, `stripe*`  |
 | `notifications` | User notifications                 | `userId`, `type`, `read`    |
 
@@ -34,6 +35,7 @@ organizations ──┬── jobs
                 ├── applications (references jobId + candidateId)
                 ├── campaigns (references jobId)
                 ├── analytics
+                ├── jobAnalytics (references jobId, daily aggregates)
                 └── billing
 
 users ── notifications

@@ -22,6 +22,59 @@ Immutable event log for tracking user interactions. Write-once, no updates or de
 
 ---
 
+## Job Analytics Collection
+
+**Path:** `jobAnalytics/{docId}`
+
+Daily aggregated performance metrics per job. One document per job per day. Used to power overview dashboard KPI sparklines and the per-job analytics page.
+
+| Field              | Type        | Required | Description                                      |
+|--------------------|-------------|----------|--------------------------------------------------|
+| `orgId`            | `string`    | Yes      | Parent organization                              |
+| `jobId`            | `string`    | Yes      | Related job                                      |
+| `date`             | `string`    | Yes      | Day in `YYYY-MM-DD` format                       |
+| `impressions`      | `number`    | Yes      | Number of times the job was shown in feed         |
+| `scrollStops`      | `number`    | Yes      | Users who paused scrolling on this job            |
+| `expands`          | `number`    | Yes      | Users who expanded the job card                   |
+| `applies`          | `number`    | Yes      | Applications submitted                            |
+| `costPerApplicant` | `number`    | Yes      | Cost per applicant for that day (USD)             |
+| `createdAt`        | `Timestamp` | Yes      | Document creation time                            |
+
+### Indexes
+
+1. `orgId` ASC + `date` DESC — Overview sparklines: fetch last 14–30 days across all jobs for an org
+2. `orgId` ASC + `jobId` ASC + `date` DESC — Per-job analytics page: fetch daily data for a single job
+
+### Usage
+
+**Overview dashboard sparklines:** Query all `jobAnalytics` docs for an org (last 30 days), then aggregate client-side:
+- **Active Jobs sparkline**: Count distinct `jobId`s per day
+- **Total Impressions sparkline**: `SUM(impressions)` per day
+- **Apply Rate sparkline**: `SUM(applies) / SUM(impressions) * 100` per day
+- **Cost per Applicant sparkline**: `SUM(costPerApplicant * applies) / SUM(applies)` per day (weighted avg)
+- **Change %**: Compare avg of last 7 days vs previous 7 days
+
+**Per-job analytics page:** Query by `orgId` + `jobId`, used to compute funnel data, trend direction, health score, and recommendations.
+
+### Data Source
+
+**Production:** Populated nightly by the `aggregateDailyJobAnalytics` Cloud Function (runs 02:00 UTC). See `functions/src/analytics/aggregate-daily.ts`.
+
+Current event-to-field mapping:
+| jobAnalytics field  | Source                                      | Status  |
+|---------------------|---------------------------------------------|---------|
+| `impressions`       | Count of `job_view` analytics events        | Proxy   |
+| `scrollStops`       | Future: `job_scroll_stop` events            | 0 (TBD) |
+| `expands`           | Future: `job_expand` events                 | 0 (TBD) |
+| `applies`           | Count of `job_apply` analytics events       | Live    |
+| `costPerApplicant`  | Derived from active campaign spend / applies | Live    |
+
+**Dev/seed:** `npm run seed` creates 180 demo docs (30 days × 6 jobs).
+
+All hooks read from Firestore via `useFirestoreCollection<JobAnalytics>` with `orgId` constraint. See `src/lib/hooks/use-job-analytics.ts` and `src/lib/hooks/use-analytics.ts`.
+
+---
+
 ## Billing Collection
 
 **Path:** `billing/{orgId}`
