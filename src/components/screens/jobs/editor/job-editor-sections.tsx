@@ -348,6 +348,88 @@ function TagInput({
   );
 }
 
+// ─── Benefits Section ─────────────────────────────────────────
+
+function BenefitsSection({
+  selectedBenefits,
+  onToggleBenefit,
+}: {
+  selectedBenefits: string[];
+  onToggleBenefit: (benefit: string) => void;
+}) {
+  const [customInput, setCustomInput] = useState("");
+
+  const customBenefits = selectedBenefits.filter(
+    (b) => !BENEFITS_OPTIONS.includes(b),
+  );
+
+  const handleAddCustom = () => {
+    const trimmed = customInput.trim();
+    if (trimmed && !selectedBenefits.includes(trimmed)) {
+      onToggleBenefit(trimmed);
+      setCustomInput("");
+    }
+  };
+
+  return (
+    <div>
+      <Label>Benefits</Label>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {BENEFITS_OPTIONS.map((benefit) => (
+          <Badge
+            key={benefit}
+            onClick={() => onToggleBenefit(benefit)}
+            className={`cursor-pointer transition-colors ${
+              selectedBenefits.includes(benefit)
+                ? "border-0 bg-lynq-accent text-lynq-accent-foreground hover:bg-lynq-accent-hover"
+                : "border-0 bg-muted text-muted-foreground hover:bg-accent"
+            }`}
+          >
+            {benefit}
+          </Badge>
+        ))}
+        {customBenefits.map((benefit) => (
+          <Badge
+            key={benefit}
+            className="cursor-pointer border-0 bg-lynq-accent text-lynq-accent-foreground hover:bg-lynq-accent-hover"
+          >
+            {benefit}
+            <button
+              type="button"
+              onClick={() => onToggleBenefit(benefit)}
+              className="ml-1 text-lynq-accent-foreground/70 hover:text-lynq-accent-foreground"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </Badge>
+        ))}
+      </div>
+      <div className="mt-2 flex gap-2">
+        <Input
+          placeholder="Add custom benefit..."
+          value={customInput}
+          onChange={(e) => setCustomInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleAddCustom();
+            }
+          }}
+        />
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleAddCustom}
+          disabled={!customInput.trim()}
+          type="button"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Header ───────────────────────────────────────────────────
 
 export function JobEditorHeader({
@@ -665,24 +747,10 @@ export function JobEditorFormCard(props: JobEditorFormCardProps) {
           </div>
         )}
         {/* Benefits */}
-        <div>
-          <Label>Benefits</Label>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {BENEFITS_OPTIONS.map((benefit) => (
-              <Badge
-                key={benefit}
-                onClick={() => onToggleBenefit(benefit)}
-                className={`cursor-pointer transition-colors ${
-                  selectedBenefits.includes(benefit)
-                    ? "border-0 bg-lynq-accent text-lynq-accent-foreground hover:bg-lynq-accent-hover"
-                    : "border-0 bg-muted text-muted-foreground hover:bg-accent"
-                }`}
-              >
-                {benefit}
-              </Badge>
-            ))}
-          </div>
-        </div>
+        <BenefitsSection
+          selectedBenefits={selectedBenefits}
+          onToggleBenefit={onToggleBenefit}
+        />
       </div>
 
       <hr className="border-border" />
