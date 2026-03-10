@@ -59,7 +59,7 @@ export function useJobAnalytics(jobId: string, dateRange?: DateRange) {
     return allDays.filter(
       (day) => day.date >= dateRange.start && day.date <= dateRange.end,
     );
-  }, [jobId, dateRange?.start, dateRange?.end]);
+  }, [jobId, dateRange]);
 
   return { analytics, isLoading: false } as const;
 }

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { panelTransition, premiumEase } from "@/components/ui/motion";
+import { premiumEase } from "@/components/ui/motion";
 import { cn } from "@/lib/utils";
 import type { JobStatus } from "@/lib/utils/job-lifecycle";
 import {

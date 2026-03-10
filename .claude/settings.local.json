@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npx tsc:*)",
       "Skill(product-management:prd)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm install:*)",
+      "Bash(ls:*)"
     ]
   },
   "enabledPlugins": {

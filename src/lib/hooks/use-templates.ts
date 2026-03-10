@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
 import { useFirestoreCollection } from "./use-firestore-subscription";
 import { createDocument } from "@/lib/firebase/firestore";
-import { SYSTEM_TEMPLATES, type SystemTemplate } from "@/lib/data/system-templates";
+import { SYSTEM_TEMPLATES } from "@/lib/data/system-templates";
 import type { Job, JobTemplate, ShiftType, PayFrequency, PayType, Urgency } from "@/lib/firebase/types";
 
 // ─── Types ────────────────────────────────────────────────────
@@ -122,8 +122,6 @@ export function useCreateTemplate() {
 // ─── useApplyTemplate ─────────────────────────────────────────
 
 export function useApplyTemplate(templateId: string | undefined) {
-  const { orgId } = useAuth();
-
   const { orgTemplates } = useTemplates();
 
   const templateFields = useMemo((): TemplateFields | null => {

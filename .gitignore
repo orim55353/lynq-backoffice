@@ -1,5 +1,5 @@
 # dependencies
-/node_modules
+node_modules
 
 # next.js
 /.next
@@ -24,6 +24,9 @@ pnpm-debug.log*
 
 # vercel
 .vercel
+
+# firebase functions
+functions/lib
 
 # typescript
 *.tsbuildinfo
