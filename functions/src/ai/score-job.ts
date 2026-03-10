@@ -1,4 +1,5 @@
-import * as functions from "firebase-functions";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { logger } from "firebase-functions/v2";
 import { getAnthropicClient } from "./client";
 import { FAST_MODEL, MAX_TOKENS_SCORE } from "./constants";
 import { SYSTEM_PROMPT_SCORE } from "./prompts";
@@ -21,16 +22,16 @@ function getCacheKey(job: Record<string, unknown>): string {
   });
 }
 
-export const scoreJob = functions
-  .runWith({ timeoutSeconds: 30, memory: "256MB" })
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "Authentication required");
+export const scoreJob = onCall(
+  { timeoutSeconds: 30, memory: "256MiB" },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Authentication required");
     }
 
-    const { job, orgId } = data as ScoreInput;
-    if (!orgId) throw new functions.https.HttpsError("invalid-argument", "orgId is required");
-    if (!job) throw new functions.https.HttpsError("invalid-argument", "job data is required");
+    const { job, orgId } = request.data as ScoreInput;
+    if (!orgId) throw new HttpsError("invalid-argument", "orgId is required");
+    if (!job) throw new HttpsError("invalid-argument", "job data is required");
 
     // Check cache
     const key = getCacheKey(job);
@@ -42,7 +43,7 @@ export const scoreJob = functions
     try {
       await checkRateLimit(orgId);
     } catch (err) {
-      throw new functions.https.HttpsError("resource-exhausted", (err as Error).message);
+      throw new HttpsError("resource-exhausted", (err as Error).message);
     }
 
     const client = getAnthropicClient();
@@ -75,11 +76,12 @@ export const scoreJob = functions
         suggestions = Array.isArray(parsed.suggestions) ? parsed.suggestions.slice(0, 5) : [];
       }
     } catch (err) {
-      functions.logger.error("scoreJob Claude call failed", { error: err });
+      logger.error("scoreJob Claude call failed", { error: err });
       // Graceful degradation — return neutral AI dims
     }
 
     const result = { attractiveness, inclusivity, suggestions };
     cache.set(key, { result, timestamp: Date.now() });
     return result;
-  });
+  },
+);

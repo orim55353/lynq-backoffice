@@ -1,4 +1,5 @@
-import * as functions from "firebase-functions";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { logger } from "firebase-functions/v2";
 import { getAnthropicClient } from "./client";
 import { FAST_MODEL, MAX_TOKENS_OPTIMIZE } from "./constants";
 import { SYSTEM_PROMPT_OPTIMIZE } from "./prompts";
@@ -17,13 +18,13 @@ function validateInput(data: unknown): OptimizeInput {
   const d = data as Record<string, unknown>;
 
   if (!d.field || typeof d.field !== "string" || !ALLOWED_FIELDS.includes(d.field)) {
-    throw new functions.https.HttpsError("invalid-argument", `field must be one of: ${ALLOWED_FIELDS.join(", ")}`);
+    throw new HttpsError("invalid-argument", `field must be one of: ${ALLOWED_FIELDS.join(", ")}`);
   }
   if (typeof d.currentValue !== "string" || !d.currentValue.trim()) {
-    throw new functions.https.HttpsError("invalid-argument", "currentValue is required");
+    throw new HttpsError("invalid-argument", "currentValue is required");
   }
   if (!d.orgId || typeof d.orgId !== "string") {
-    throw new functions.https.HttpsError("invalid-argument", "orgId is required");
+    throw new HttpsError("invalid-argument", "orgId is required");
   }
 
   return {
@@ -51,19 +52,19 @@ function parseResponse(text: string): { optimizedValue: string; reasoning: strin
   };
 }
 
-export const optimizeField = functions
-  .runWith({ timeoutSeconds: 30, memory: "256MB" })
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "Authentication required");
+export const optimizeField = onCall(
+  { timeoutSeconds: 30, memory: "256MiB" },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Authentication required");
     }
 
-    const input = validateInput(data);
+    const input = validateInput(request.data);
 
     try {
       await checkRateLimit(input.orgId);
     } catch (err) {
-      throw new functions.https.HttpsError("resource-exhausted", (err as Error).message);
+      throw new HttpsError("resource-exhausted", (err as Error).message);
     }
 
     const client = getAnthropicClient();
@@ -87,7 +88,8 @@ export const optimizeField = functions
 
       return parseResponse(content.text);
     } catch (err) {
-      functions.logger.error("optimizeField failed", { error: err, field: input.field });
-      throw new functions.https.HttpsError("internal", "AI optimization failed. Please try again.");
+      logger.error("optimizeField failed", { error: err, field: input.field });
+      throw new HttpsError("internal", "AI optimization failed. Please try again.");
     }
-  });
+  },
+);

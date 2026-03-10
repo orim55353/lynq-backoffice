@@ -1,25 +1,26 @@
-import * as functions from "firebase-functions";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { logger } from "firebase-functions/v2";
 import { getAnthropicClient } from "./client";
 import { FAST_MODEL, MAX_TOKENS_SCORE } from "./constants";
 import { SYSTEM_PROMPT_BIAS } from "./prompts";
 import { checkRateLimit } from "./rate-limiter";
 
-export const detectBias = functions
-  .runWith({ timeoutSeconds: 30, memory: "256MB" })
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "Authentication required");
+export const detectBias = onCall(
+  { timeoutSeconds: 30, memory: "256MiB" },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Authentication required");
     }
 
-    const { text, orgId } = data as { text: string; orgId: string };
-    if (!orgId) throw new functions.https.HttpsError("invalid-argument", "orgId is required");
-    if (!text || typeof text !== "string") throw new functions.https.HttpsError("invalid-argument", "text is required");
+    const { text, orgId } = request.data as { text: string; orgId: string };
+    if (!orgId) throw new HttpsError("invalid-argument", "orgId is required");
+    if (!text || typeof text !== "string") throw new HttpsError("invalid-argument", "text is required");
     if (text.trim().length < 10) return { issues: [] };
 
     try {
       await checkRateLimit(orgId);
     } catch (err) {
-      throw new functions.https.HttpsError("resource-exhausted", (err as Error).message);
+      throw new HttpsError("resource-exhausted", (err as Error).message);
     }
 
     try {
@@ -37,7 +38,6 @@ export const detectBias = functions
       const parsed = JSON.parse(content.text);
       if (!Array.isArray(parsed)) return { issues: [] };
 
-      // Add approximate positions
       const issues = parsed.map((issue: Record<string, unknown>) => ({
         text: String(issue.text ?? ""),
         type: String(issue.type ?? "gendered"),
@@ -48,7 +48,8 @@ export const detectBias = functions
 
       return { issues };
     } catch (err) {
-      functions.logger.error("detectBias failed", { error: err });
-      return { issues: [] }; // Graceful degradation
+      logger.error("detectBias failed", { error: err });
+      return { issues: [] };
     }
-  });
+  },
+);
