@@ -19,7 +19,7 @@ export function AbTestingScreen() {
 
   return (
     <div className="space-y-6">
-      <AbTestingHeader onBack={() => router.push("/job-cards")} />
+      <AbTestingHeader onBack={() => router.push("/jobs")} />
       <ActiveTestCard test={activeTest} isLoading={isLoading} />
       <VersionComparisonGrid test={activeTest} isLoading={isLoading} />
       <PerformanceComparisonChart test={activeTest} isLoading={isLoading} chart={chart} />

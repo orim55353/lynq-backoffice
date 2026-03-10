@@ -13,14 +13,22 @@ export function useMarketInsights() {
   const insights = useMemo(() => {
     if (!jobs || !candidates || !applications) return null;
 
-    const salaryData = jobs
-      .filter((j) => j.salaryMin && j.salaryMax)
+    const payData = jobs
+      .filter((j) =>
+        (j.payType === "salary" && j.salaryMin && j.salaryMax) ||
+        (j.payType !== "salary" && j.hourlyPayMin && j.hourlyPayMax),
+      )
       .slice(0, 5)
-      .map((j) => ({
-        role: j.title,
-        market: Math.round(((j.salaryMin ?? 0) + (j.salaryMax ?? 0)) / 2 * 1.05),
-        yours: Math.round(((j.salaryMin ?? 0) + (j.salaryMax ?? 0)) / 2),
-      }));
+      .map((j) => {
+        const isSalary = j.payType === "salary";
+        const min = isSalary ? (j.salaryMin ?? 0) : (j.hourlyPayMin ?? 0);
+        const max = isSalary ? (j.salaryMax ?? 0) : (j.hourlyPayMax ?? 0);
+        return {
+          role: j.title,
+          market: Math.round((min + max) / 2 * 1.05),
+          yours: Math.round((min + max) / 2),
+        };
+      });
 
     const locationCounts = new Map<string, number>();
     candidates.forEach((c) => {
@@ -33,11 +41,11 @@ export function useMarketInsights() {
       .map(([region, count]) => ({
         region,
         demand: Math.min(99, Math.round((count / candidates.length) * 200)),
-        avgSalary: "—",
+        avgPay: "—",
         competition: count > 3 ? "Very High" : count > 1 ? "High" : "Medium",
       }));
 
-    return { salaryData, regionalDemand };
+    return { payData, regionalDemand };
   }, [jobs, candidates, applications]);
 
   return {

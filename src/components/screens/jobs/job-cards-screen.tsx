@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Briefcase, Grid3x3, List, Plus } from "lucide-react";
+import { BarChart3, Briefcase, Grid3x3, List, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -79,11 +79,21 @@ export function JobCardsScreen() {
           <button
             onClick={(event) => {
               event.stopPropagation();
-              router.push(`/job-cards/${row.id}/ab-test`);
+              router.push(`/jobs/${row.id}/ab-test`);
             }}
             className="text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
             A/B Test
+          </button>
+          <button
+            onClick={(event) => {
+              event.stopPropagation();
+              router.push(`/jobs/${row.id}/analytics`);
+            }}
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <BarChart3 className="h-3 w-3" />
+            Analytics
           </button>
         </div>
       )
@@ -137,7 +147,7 @@ export function JobCardsScreen() {
           </motion.div>
 
           <Button
-            onClick={() => router.push("/job-cards/new/edit")}
+            onClick={() => router.push("/jobs/new/edit")}
             className="bg-lynq-accent text-lynq-accent-foreground hover:bg-lynq-accent-hover"
           >
             <Plus className="mr-2 h-4 w-4" />
@@ -155,7 +165,7 @@ export function JobCardsScreen() {
           description="Create your first job listing"
           action={{
             label: "Create New Job",
-            onClick: () => router.push("/job-cards/new/edit"),
+            onClick: () => router.push("/jobs/new/edit"),
           }}
         />
       ) : viewMode === "list" ? (
@@ -163,7 +173,7 @@ export function JobCardsScreen() {
           columns={columns}
           data={rows}
           rowKey={(row) => row.id}
-          onRowClick={(row) => router.push(`/job-cards/${row.id}/edit`)}
+          onRowClick={(row) => router.push(`/jobs/${row.id}/edit`)}
         />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -171,7 +181,7 @@ export function JobCardsScreen() {
             <Card
               key={row.id}
               className="cursor-pointer rounded-[22px] border-border bg-card p-5 shadow-soft transition-shadow hover:shadow-md"
-              onClick={() => router.push(`/job-cards/${row.id}/edit`)}
+              onClick={() => router.push(`/jobs/${row.id}/edit`)}
             >
               <div className="mb-3 flex items-start justify-between">
                 <h3 className="font-semibold leading-snug">{row.title}</h3>
@@ -199,15 +209,27 @@ export function JobCardsScreen() {
                 ) : (
                   <span className="text-xs text-muted-foreground">Not boosted</span>
                 )}
-                <button
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    router.push(`/job-cards/${row.id}/ab-test`);
-                  }}
-                  className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  A/B Test
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      router.push(`/jobs/${row.id}/ab-test`);
+                    }}
+                    className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    A/B Test
+                  </button>
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      router.push(`/jobs/${row.id}/analytics`);
+                    }}
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <BarChart3 className="h-3 w-3" />
+                    Analytics
+                  </button>
+                </div>
               </div>
             </Card>
           ))}

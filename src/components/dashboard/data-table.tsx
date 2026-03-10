@@ -23,7 +23,7 @@ export function DataTable<T>({
   data,
   rowKey,
   onRowClick,
-  selectedRowKey
+  selectedRowKey,
 }: DataTableProps<T>) {
   return (
     <MotionCard className="overflow-hidden rounded-[22px] border-border bg-card shadow-soft">
@@ -45,7 +45,8 @@ export function DataTable<T>({
           <tbody>
             {data.map((row, index) => {
               const key = rowKey(row, index);
-              const isSelected = selectedRowKey !== undefined && selectedRowKey === key;
+              const isSelected =
+                selectedRowKey !== undefined && selectedRowKey === key;
 
               return (
                 <tr
@@ -55,7 +56,7 @@ export function DataTable<T>({
                     "border-b border-border/50 transition-colors duration-150",
                     index % 2 === 1 ? "bg-muted/25" : "",
                     isSelected ? "bg-selected-row-bg" : "",
-                    onRowClick ? "cursor-pointer hover:bg-selected-row-bg" : ""
+                    onRowClick ? "cursor-pointer hover:bg-selected-row-bg" : "",
                   ].join(" ")}
                 >
                   {columns.map((column) => (
@@ -75,24 +76,34 @@ export function DataTable<T>({
 
 export function HealthScoreBadge({ score }: { score: number }) {
   if (score >= 80) {
-    return <Badge className="border-0 bg-success/10 text-success">Strong</Badge>;
+    return (
+      <Badge className="border-0 bg-success/10 text-success">Strong</Badge>
+    );
   }
 
   if (score >= 60) {
-    return <Badge className="border-0 bg-warning/10 text-warning">Average</Badge>;
+    return (
+      <Badge className="border-0 bg-warning/10 text-warning">Average</Badge>
+    );
   }
 
-  return <Badge className="border-0 bg-danger/10 text-danger">Needs Attention</Badge>;
+  return (
+    <Badge className="border-0 bg-danger/10 text-danger">Needs Attention</Badge>
+  );
 }
 
 export function StatusBadge({ status }: { status: string }) {
   if (status === "Active") {
-    return <Badge className="border-0 bg-success/10 text-success">Active</Badge>;
+    return (
+      <Badge className="border-0 bg-success/10 text-success">Active</Badge>
+    );
   }
 
   if (status === "Completed") {
     return <Badge className="border-0 bg-info/10 text-info">Completed</Badge>;
   }
 
-  return <Badge className="border-0 bg-muted text-muted-foreground">{status}</Badge>;
+  return (
+    <Badge className="border-0 bg-muted text-muted-foreground">{status}</Badge>
+  );
 }

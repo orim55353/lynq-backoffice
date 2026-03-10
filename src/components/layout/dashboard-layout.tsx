@@ -54,7 +54,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
-  { href: "/job-cards", label: "Job Listings", icon: FileText },
+  { href: "/jobs", label: "Job Listings", icon: FileText },
   { href: "/sponsored", label: "Sponsored", icon: Rocket },
   { href: "/candidates", label: "Candidates", icon: Users },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },

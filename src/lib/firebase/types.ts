@@ -50,8 +50,25 @@ export interface OrgMember extends BaseDocument {
 // ─── Jobs ──────────────────────────────────────────────────────
 
 export type JobStatus = "draft" | "active" | "paused" | "closed" | "archived";
-export type JobType = "full-time" | "part-time" | "contract" | "internship" | "temporary";
-export type ExperienceLevel = "entry" | "mid" | "senior" | "lead" | "executive";
+export type JobType = "full-time" | "part-time" | "contract" | "temporary";
+export type ShiftType = "day" | "night" | "swing" | "rotating" | "flexible";
+export type Urgency = "immediate" | "within_week" | "within_month" | "flexible";
+export type PayFrequency = "weekly" | "biweekly" | "monthly";
+export type PayType = "hourly" | "salary";
+
+export interface QualityBreakdown {
+  payTransparency: number;
+  shiftClarity: number;
+  requirementsClarity: number;
+  locationLogistics: number;
+  readability: number;
+}
+
+export interface QualitySuggestion {
+  field: string;
+  message: string;
+  impact: "high" | "medium" | "low";
+}
 
 export interface Job extends BaseDocument {
   orgId: string;
@@ -60,10 +77,6 @@ export interface Job extends BaseDocument {
   location: string;
   locationType: "onsite" | "remote" | "hybrid";
   type: JobType;
-  experienceLevel: ExperienceLevel;
-  salaryMin: number | null;
-  salaryMax: number | null;
-  currency: string;
   description: string;
   requirements: string[];
   benefits: string[];
@@ -74,6 +87,123 @@ export interface Job extends BaseDocument {
   createdBy: string;
   viewCount: number;
   applicationCount: number;
+  // Compensation
+  payType: PayType;
+  hourlyPayMin: number | null;
+  hourlyPayMax: number | null;
+  overtimeRate: number | null;
+  payFrequency: PayFrequency;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  currency: string;
+  // Shift & schedule
+  shiftType: ShiftType | null;
+  shiftSchedule: string;
+  startDate: Timestamp | null;
+  urgency: Urgency;
+  // Physical & certification requirements
+  physicalRequirements: string[];
+  certifications: string[];
+  experienceYears: number | null;
+  transportRequired: boolean;
+  // AI & Quality scoring
+  qualityScore?: number;
+  qualityBreakdown?: QualityBreakdown;
+  aiGenerated?: boolean;
+  aiOptimizedFields?: string[];
+  // Lifecycle
+  templateId?: string;
+  scheduledPublishAt?: Timestamp;
+  closedReason?: string;
+  closedAt?: Timestamp;
+}
+
+// ─── Job Templates ────────────────────────────────────────────
+
+export type TemplateCategory =
+  | "warehouse"
+  | "construction"
+  | "manufacturing"
+  | "trades"
+  | "food_service"
+  | "driving"
+  | "healthcare"
+  | "retail"
+  | "custom";
+
+export interface JobTemplate extends BaseDocument {
+  orgId: string;
+  name: string;
+  category: TemplateCategory;
+  fields: Partial<Omit<Job, "id" | "orgId" | "createdAt" | "updatedAt" | "createdBy" | "status">>;
+  isSystem: boolean;
+  usageCount: number;
+}
+
+// ─── Job Analytics ────────────────────────────────────────────
+
+export interface JobAnalytics {
+  id: string;
+  orgId: string;
+  jobId: string;
+  date: string;
+  impressions: number;
+  scrollStops: number;
+  expands: number;
+  applies: number;
+  costPerApplicant: number;
+  createdAt: Timestamp;
+}
+
+export interface JobPerformanceSummary {
+  jobId: string;
+  title: string;
+  status: string;
+  totalImpressions: number;
+  totalScrollStops: number;
+  totalExpands: number;
+  totalApplies: number;
+  scrollStopRate: number;
+  expandRate: number;
+  applyRate: number;
+  avgCostPerApplicant: number;
+  trend: "improving" | "declining" | "stable";
+  healthScore: number;
+}
+
+export interface FunnelData {
+  impressions: number;
+  scrollStops: number;
+  expands: number;
+  applies: number;
+  scrollStopRate: number;
+  expandRate: number;
+  applyRate: number;
+}
+
+export interface OrgBenchmarks {
+  avgScrollStopRate: number;
+  avgExpandRate: number;
+  avgApplyRate: number;
+  avgCostPerApplicant: number;
+  avgHealthScore: number;
+}
+
+export interface ComparisonResult {
+  metric: string;
+  yourValue: number;
+  orgAvg: number;
+  deltaPercent: number;
+  isAboveAvg: boolean;
+}
+
+export interface Recommendation {
+  id: string;
+  severity: "high" | "medium" | "low";
+  icon: "trending-down" | "alert-circle" | "dollar-sign" | "users" | "zap";
+  message: string;
+  action: string;
+  actionRoute?: string;
 }
 
 // ─── Candidates ────────────────────────────────────────────────
@@ -137,7 +267,7 @@ export interface Campaign extends BaseDocument {
   targetAudience: {
     locations: string[];
     skills: string[];
-    experienceLevels: ExperienceLevel[];
+    experienceLevels: string[];
   };
   metrics: {
     impressions: number;

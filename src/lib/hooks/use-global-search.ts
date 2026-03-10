@@ -40,7 +40,7 @@ function searchJobs(jobs: Job[], tokens: string[]): SearchResultItem[] {
       title: j.title,
       subtitle: `${j.department} · ${j.location}`,
       status: j.status,
-      href: `/job-cards/${j.id}/edit`,
+      href: `/jobs/${j.id}/edit`,
     }));
 }
 

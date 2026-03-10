@@ -16,8 +16,8 @@ export function OverviewScreen() {
       <OverviewHeader />
       <OverviewKpiGrid />
       <OverviewJobPerformanceTable
-        onViewAllJobs={() => router.push("/job-cards")}
-        onOpenJob={(jobId) => router.push(`/job-cards/${jobId}/edit`)}
+        onViewAllJobs={() => router.push("/jobs")}
+        onOpenJob={(jobId) => router.push(`/jobs/${jobId}/edit`)}
       />
       <OverviewAlertsGrid />
     </div>

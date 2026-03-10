@@ -75,20 +75,20 @@ export function SalaryBenchmarkCard({ chart }: { chart: ChartTheme }) {
     return <SkeletonChartCard />;
   }
 
-  if (!data || data.salaryData.length === 0) {
+  if (!data || data.payData.length === 0) {
     return (
       <MotionCard className="rounded-[22px] border-border bg-card p-5 shadow-soft">
-        <h2 className="mb-4">Salary Benchmarking</h2>
+        <h2 className="mb-4">Pay Benchmarking</h2>
         <div className="flex h-[350px] items-center justify-center">
           <p className="text-sm text-muted-foreground">
-            No salary data available. Add jobs with salary ranges to see benchmarks.
+            No pay data available. Add jobs with hourly pay ranges to see benchmarks.
           </p>
         </div>
       </MotionCard>
     );
   }
 
-  const salaryData = data.salaryData;
+  const salaryData = data.payData;
 
   return (
     <MotionCard className="rounded-[22px] border-border bg-card p-5 shadow-soft">
@@ -283,7 +283,7 @@ export function RegionalDemandCard() {
                     <span className="text-sm">{region.demand}</span>
                   </div>
                 </td>
-                <td className="px-4 py-3 font-semibold text-success">{region.avgSalary}</td>
+                <td className="px-4 py-3 font-semibold text-success">{region.avgPay}</td>
                 <td className="px-4 py-3">
                   <Badge className={`border-0 ${getCompetitionBadgeClass(region.competition)}`}>
                     {region.competition}
