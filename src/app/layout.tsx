@@ -14,7 +14,10 @@ export const metadata: Metadata = {
   title: "Lynq — Employer Dashboard",
   description:
     "Manage jobs, candidates, campaigns, and analytics — all in one place.",
-  metadataBase: new URL("https://app.lynq.work"),
+  icons: {
+    icon: "/icon.svg",
+  },
+  metadataBase: new URL("https://app.lynq.jobs"),
   openGraph: {
     title: "Lynq — Employer Dashboard",
     description:
@@ -24,7 +27,7 @@ export const metadata: Metadata = {
     locale: "en_US",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Lynq — Employer Dashboard",
     description:
       "Manage jobs, candidates, campaigns, and analytics — all in one place.",

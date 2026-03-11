@@ -38,6 +38,14 @@ firestore-debug.log
 ui-debug.log
 .firebase
 
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+.playwright-mcp/
+e2e-results/
+
 # AI tools / local configs
 .agent/
 .agents/

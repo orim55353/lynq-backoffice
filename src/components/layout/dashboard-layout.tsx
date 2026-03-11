@@ -23,11 +23,12 @@ import {
   TrendingUp,
   Users,
   X,
-  Zap
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { LynqLogo } from "@/components/ui/lynq-logo";
+import { LynqWordmark } from "@/components/ui/lynq-wordmark";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth-context";
 import { useNotifications } from "@/lib/hooks/use-notifications";
@@ -58,9 +59,14 @@ const navItems: NavItem[] = [
   { href: "/sponsored", label: "Sponsored", icon: Rocket },
   { href: "/candidates", label: "Candidates", icon: Users },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/market-insights", label: "Market Insights", icon: TrendingUp, badge: "Pro" },
+  {
+    href: "/market-insights",
+    label: "Market Insights",
+    icon: TrendingUp,
+    badge: "Pro",
+  },
   { href: "/billing", label: "Billing", icon: CreditCard },
-  { href: "/settings", label: "Settings", icon: Settings }
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
@@ -72,11 +78,19 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { unreadCount } = useNotifications();
-  const toggleNotifications = useCallback(() => setNotificationsOpen((prev) => !prev), []);
+  const toggleNotifications = useCallback(
+    () => setNotificationsOpen((prev) => !prev),
+    [],
+  );
 
   const userInitials = user?.displayName
-    ? user.displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
-    : user?.email?.slice(0, 2).toUpperCase() ?? "U";
+    ? user.displayName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : (user?.email?.slice(0, 2).toUpperCase() ?? "U");
   const userName = user?.displayName ?? user?.email ?? "User";
 
   const desktopSidebarWidth = sidebarOpen ? "md:ml-56" : "md:ml-16";
@@ -95,25 +109,33 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         className={[
           "fixed left-0 top-0 z-30 h-full border-r border-frame-border bg-frame transition-all duration-150 ease-in-out",
           sidebarOpen ? "w-56" : "w-16",
-          mobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          mobileMenuOpen
+            ? "translate-x-0"
+            : "-translate-x-full md:translate-x-0",
         ].join(" ")}
       >
         <div className="flex h-full flex-col">
           <div className="flex h-[57px] items-center border-b border-frame-border px-4">
             <div className="flex w-full items-center justify-between">
-              <div className="flex items-center gap-2.5 overflow-hidden">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-lynq-accent">
-                  <Zap className="h-4 w-4 text-lynq-accent-foreground" />
+              <div className="relative flex items-center overflow-hidden text-frame-foreground">
+                <div
+                  className="transition-opacity duration-200"
+                  style={{
+                    opacity: sidebarOpen ? 1 : 0,
+                    transitionDelay: sidebarOpen ? "100ms" : "0ms",
+                  }}
+                >
+                  <LynqWordmark height={24} />
                 </div>
-                {sidebarOpen ? (
-                  <span className="relative font-semibold tracking-tight text-frame-foreground">
-                    Lyn
-                    <span className="relative">
-                      q
-                      <span className="absolute -bottom-0.5 left-0 h-[2px] w-full rounded-full bg-lynq-accent" />
-                    </span>
-                  </span>
-                ) : null}
+                <div
+                  className="absolute left-0 transition-opacity duration-200"
+                  style={{
+                    opacity: sidebarOpen ? 0 : 1,
+                    transitionDelay: sidebarOpen ? "0ms" : "100ms",
+                  }}
+                >
+                  <LynqLogo size={32} className="rounded-lg" />
+                </div>
               </div>
 
               <div className="flex items-center gap-1">
@@ -123,7 +145,11 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                   className="h-7 w-7 text-frame-muted hover:bg-frame-hover hover:text-frame-foreground"
                   onClick={() => setSidebarOpen((current) => !current)}
                 >
-                  {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+                  {sidebarOpen ? (
+                    <PanelLeftClose className="h-4 w-4" />
+                  ) : (
+                    <PanelLeft className="h-4 w-4" />
+                  )}
                 </Button>
                 <Button
                   variant="ghost"
@@ -141,7 +167,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive =
-                pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+                pathname === item.href ||
+                (item.href !== "/" && pathname.startsWith(item.href));
 
               return (
                 <Link
@@ -153,7 +180,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                     sidebarOpen ? "" : "justify-center",
                     isActive
                       ? "bg-frame-active text-frame-foreground"
-                      : "text-frame-muted hover:bg-frame-hover hover:text-frame-foreground"
+                      : "text-frame-muted hover:bg-frame-hover hover:text-frame-foreground",
                   ].join(" ")}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -161,7 +188,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                     <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-lynq-accent" />
                   ) : null}
                   <Icon className="h-[18px] w-[18px] shrink-0" />
-                  {sidebarOpen ? <span className="truncate text-sm">{item.label}</span> : null}
+                  {sidebarOpen ? (
+                    <span className="truncate text-sm">{item.label}</span>
+                  ) : null}
                   {sidebarOpen && item.badge ? (
                     <Badge className="ml-auto border-0 bg-lynq-accent-muted px-1.5 py-0 text-[10px] text-lynq-accent">
                       {item.badge}
@@ -176,11 +205,17 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             <div className="border-t border-frame-border px-3 py-3">
               <div className="flex items-center gap-2.5">
                 <Avatar className="h-7 w-7">
-                  <AvatarFallback className="bg-frame-active text-xs text-frame-foreground">{userInitials}</AvatarFallback>
+                  <AvatarFallback className="bg-frame-active text-xs text-frame-foreground">
+                    {userInitials}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs text-frame-foreground">{userName}</p>
-                  <p className="truncate text-[10px] text-frame-muted">{user?.email ?? ""}</p>
+                  <p className="truncate text-xs text-frame-foreground">
+                    {userName}
+                  </p>
+                  <p className="truncate text-[10px] text-frame-muted">
+                    {user?.email ?? ""}
+                  </p>
                 </div>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -202,7 +237,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={signOut}>Sign out</AlertDialogAction>
+                      <AlertDialogAction onClick={signOut}>
+                        Sign out
+                      </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
@@ -224,7 +261,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               >
                 <Menu className="h-4 w-4" />
               </Button>
-              <span className="text-sm text-muted-foreground">TechCorp Inc.</span>
+              <span className="text-sm text-muted-foreground">
+                TechCorp Inc.
+              </span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -234,7 +273,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               >
                 <Search className="h-3.5 w-3.5" />
                 <span>Search...</span>
-                <kbd className="ml-4 rounded border border-border px-1.5 py-0.5 text-[10px] font-medium">⌘K</kbd>
+                <kbd className="ml-4 rounded border border-border px-1.5 py-0.5 text-[10px] font-medium">
+                  ⌘K
+                </kbd>
               </button>
               <Button
                 variant="ghost"
@@ -251,7 +292,11 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 className="h-8 w-8 text-muted-foreground hover:bg-accent hover:text-foreground"
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               >
-                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                {theme === "dark" ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
               </Button>
 
               <div className="relative z-50">
@@ -268,7 +313,10 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                     </span>
                   ) : null}
                 </Button>
-                <NotificationPanel open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
+                <NotificationPanel
+                  open={notificationsOpen}
+                  onClose={() => setNotificationsOpen(false)}
+                />
               </div>
             </div>
           </div>

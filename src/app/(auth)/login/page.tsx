@@ -3,10 +3,11 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Loader2, Mail, Lock, Zap } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { signIn, resetPassword } from "@/lib/firebase";
+import { LynqWordmark } from "@/components/ui/lynq-wordmark";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -68,22 +69,11 @@ export default function LoginPage() {
         className="relative w-full max-w-sm"
       >
         {/* Logo */}
-        <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-lynq-accent shadow-lg shadow-lynq-accent/20">
-            <Zap className="h-5 w-5 text-lynq-accent-foreground" />
-          </div>
-          <div>
-            <h1 className="text-center text-xl font-semibold tracking-tight text-foreground">
-              Lyn
-              <span className="relative">
-                q
-                <span className="absolute -bottom-0.5 left-0 h-[2px] w-full rounded-full bg-lynq-accent" />
-              </span>
-            </h1>
-            <p className="mt-1 text-center text-sm text-muted-foreground">
-              Sign in to your backoffice
-            </p>
-          </div>
+        <div className="mb-8 flex flex-col items-center gap-4">
+          <LynqWordmark height={36} className="text-foreground" />
+          <p className="text-center text-sm text-muted-foreground">
+            Sign in to your backoffice
+          </p>
         </div>
 
         {/* Card */}

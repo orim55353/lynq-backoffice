@@ -6,7 +6,14 @@
       "Bash(sed:*)",
       "Bash(pnpm run:*)",
       "Bash(pnpm install:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npx vite:*)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_evaluate",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_press_key",
+      "mcp__plugin_playwright_playwright__browser_run_code"
     ]
   },
   "enabledPlugins": {
